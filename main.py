@@ -68,9 +68,9 @@ def main():
     c = conn.cursor()
     sql_data = (date, cc, tt, accuracy * 10000, error)
     c.execute(insert_sql, sql_data)
+    conn.commit()
 
     draw7days(v_list[int(user_choose)])
-    conn.commit()
     conn.close()
 
 
