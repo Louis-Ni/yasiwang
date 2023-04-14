@@ -48,7 +48,7 @@ def main():
         total_words = len(vocab[c][t])
         text = colored("word " + str(i) + ":", "green")
         v = input(text)
-        if v == word:
+        if v == word.lower():
             correct = correct + 1
         else:
             error = error + 1
@@ -160,4 +160,4 @@ def end(signum, frame):
 
 if __name__ == '__main__':
     main()
-    # draw7days()
+    # draw7days('chater3-test1')
