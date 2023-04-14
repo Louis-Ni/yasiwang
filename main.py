@@ -9,8 +9,12 @@ import sqlite3
 from time import strftime, localtime
 import matplotlib.pyplot as plt
 
+USER_ID = 1
+
+
 def main():
     insert_sql = ''' insert into vocab_history (date, chapter, test_paper, accuracy, mistake) values (?,?,?,?,?) '''
+    insert_mistake_vocab_sql = ''' insert into mistake_vocab_history (vocab_history_id, vocab, user_id) values (?,?,?) '''
     vocab, v_list = init_vocabulary()
     signal.signal(signal.SIGINT, end)
     signal.signal(signal.SIGTERM, end)
@@ -40,6 +44,8 @@ def main():
     table.add_row(headers)
     table.set_cols_align(["l", "l", "l", "l"])
     table.set_cols_valign(["m", "m", "m", "m"])
+
+    mistake_vocab = []
     total_words = 0
     correct = 0
     error = 0
@@ -52,6 +58,7 @@ def main():
             correct = correct + 1
         else:
             error = error + 1
+            mistake_vocab.append(word)
 
         cor = "✅" if v == word else "❌"
         row = [i, word, v, cor]
@@ -67,8 +74,10 @@ def main():
     conn = sqlite3.connect('data.db')
     c = conn.cursor()
     sql_data = (date, cc, tt, accuracy * 10000, error)
-    c.execute(insert_sql, sql_data)
-    conn.commit()
+    res = c.execute(insert_sql, sql_data)
+    insert_mistake_vocab_sql_data = (res.lastrowid, json.dumps(mistake_vocab), USER_ID)
+    c.execute(insert_mistake_vocab_sql, insert_mistake_vocab_sql_data)
+    print(conn.commit())
 
     draw7days(v_list[int(user_choose)])
     conn.close()
@@ -122,10 +131,10 @@ def draw7days(user_choose):
     plt.title(user_choose)
     # 绘制 准确率的数字
     for x1, y1 in zip(x, y1):
-        plt.text(x1, y1+1, str(y1), ha='center', va='bottom', fontsize=6, rotation=0)
+        plt.text(x1, y1 + 1, str(y1), ha='center', va='bottom', fontsize=6, rotation=0)
 
     for x1, y2 in zip(x, y2):
-        plt.text(x1, y2+1, str(y2), ha='center', va='bottom', fontsize=6, rotation=0)
+        plt.text(x1, y2 + 1, str(y2), ha='center', va='bottom', fontsize=6, rotation=0)
     # 绘制 错误字数的数字
 
     plt.show()
