@@ -8,6 +8,7 @@ import datetime
 import sqlite3
 from time import strftime, localtime
 import matplotlib.pyplot as plt
+import numpy as np
 
 USER_ID = 1
 
@@ -76,23 +77,19 @@ def main():
     sql_data = (date, cc, tt, accuracy * 10000, error)
     res = c.execute(insert_sql, sql_data)
     insert_mistake_vocab_sql_data = (res.lastrowid, json.dumps(mistake_vocab), USER_ID)
-    c.execute(insert_mistake_vocab_sql, insert_mistake_vocab_sql_data)
-    print(conn.commit())
+
+    if len(mistake_vocab) != 0:
+        c.execute(insert_mistake_vocab_sql, insert_mistake_vocab_sql_data)
+
+    conn.commit()
 
     draw7days(v_list[int(user_choose)])
+    count_wrong_vocab_percentage(v_list[int(user_choose)])
     conn.close()
 
 
 def draw7days(user_choose):
-    c, t = user_choose.split('-')
-    cc = int(re.findall(r'\d', c)[0])
-    tt = int(re.findall(r'\d', t)[0])
-    today = datetime.datetime.strftime(datetime.datetime.now() + datetime.timedelta(days=+1), '%Y-%m-%d')
-    sub7days = datetime.datetime.strftime(datetime.datetime.now() + datetime.timedelta(days=-7), '%Y-%m-%d')
-    conn = sqlite3.connect('data.db')
-    c = conn.cursor()
-    d = c.execute("select * from vocab_history where chapter = ? and test_paper = ? and date between ? and ?",
-                  (cc, tt, sub7days, today))
+    d = get_user_vocab_history(user_choose)
     # x轴是时间(月份+日子)
     x = []
 
@@ -140,9 +137,69 @@ def draw7days(user_choose):
     plt.show()
 
 
+def count_wrong_vocab_percentage(user_choose):
+    colors = ["#A0CBE8", "#F28E2B", "#FFBE7D", "#59A14F", "#8CD17D", "#B6992D", "#F1CE63", "#499894",
+              "#86BCB6", "#E15759", "#E19D9A"]
+    d = get_user_vocab_history(user_choose)
+    conn = sqlite3.connect('data.db')
+    c = conn.cursor()
+    ids = []
+    mistake_vocab = {}
+    for row in d:
+        ids.append(row[0])
+
+    res = c.execute('select * from mistake_vocab_history where vocab_history_id in (%s) ' % ','.join('?' * len(ids)),
+                    ids)
+
+    for row in res:
+        vocab = json.loads(row[2])
+        for v in vocab:
+            if v not in mistake_vocab.keys():
+                mistake_vocab[v] = 1
+            else:
+                mistake_vocab[v] = mistake_vocab[v] + 1
+
+    if len(mistake_vocab) == 0:
+        return
+
+    sorted_vocab = sorted(mistake_vocab, reverse=True)
+    num_list = []
+    for sv in sorted_vocab:
+        num_list.append(mistake_vocab[sv])
+    fig, ax = plt.subplots(figsize=(7, 3), dpi=200)
+    # --- Remove spines and add gridlines
+    ax.spines["left"].set_visible(False)
+    ax.spines["top"].set_visible(False)
+    ax.spines["right"].set_visible(False)
+    ax.xaxis.set_tick_params(length=2, color="#4E616C", labelcolor="#4E616C", labelsize=6)
+
+    ax.set_xticks([])
+    x = np.arange(len(num_list))
+
+    for i, j in zip(num_list, x):
+        plt.text(i + 0.05, j, '%.0f' % i, ha='center', va='bottom', fontsize=6)
+
+    plt.barh(sorted_vocab, num_list, color=colors)
+    plt.title(user_choose, fontsize=8)
+    plt.show()
+
+
 def load_vocabulary_file():
     f = open('vocabulary.json')
     return json.load(f)
+
+
+def get_user_vocab_history(user_choose):
+    c, t = user_choose.split('-')
+    cc = int(re.findall(r'\d', c)[0])
+    tt = int(re.findall(r'\d', t)[0])
+    today = datetime.datetime.strftime(datetime.datetime.now() + datetime.timedelta(days=+1), '%Y-%m-%d')
+    sub7days = datetime.datetime.strftime(datetime.datetime.now() + datetime.timedelta(days=-7), '%Y-%m-%d')
+    conn = sqlite3.connect('data.db')
+    c = conn.cursor()
+    d = c.execute("select * from vocab_history where chapter = ? and test_paper = ? and date between ? and ?",
+                  (cc, tt, sub7days, today))
+    return d
 
 
 def init_vocabulary():
@@ -168,5 +225,6 @@ def end(signum, frame):
 
 
 if __name__ == '__main__':
-    main()
+    # main()
     # draw7days('chater3-test1')
+    count_wrong_vocab_percentage('charter3-test2')
