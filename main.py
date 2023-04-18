@@ -55,14 +55,15 @@ def main():
         total_words = len(vocab[c][t])
         text = colored("word " + str(i) + ":", "green")
         v = input(text)
-        if v == word.lower():
+        word_lower = word.lower()
+        if v == word_lower:
             correct = correct + 1
         else:
             error = error + 1
-            mistake_vocab.append(word)
+            mistake_vocab.append(word_lower)
 
-        cor = "✅" if v == word else "❌"
-        row = [i, word, v, cor]
+        cor = "✅" if v == word_lower else "❌"
+        row = [i, word_lower, v, cor]
         table.add_row(row)
         i = i + 1
 
@@ -225,6 +226,6 @@ def end(signum, frame):
 
 
 if __name__ == '__main__':
-    # main()
+    main()
     # draw7days('chater3-test1')
-    count_wrong_vocab_percentage('charter3-test2')
+    # count_wrong_vocab_percentage('charter3-test2')
