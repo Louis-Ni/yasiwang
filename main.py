@@ -165,8 +165,14 @@ def count_wrong_vocab_percentage(user_choose):
 
     sorted_vocab = sorted(mistake_vocab, reverse=True)
     num_list = []
+    show_sorted_vocab = []
+    stop = 0
     for sv in sorted_vocab:
+        if stop == 20:
+            break
         num_list.append(mistake_vocab[sv])
+        show_sorted_vocab.append(sv)
+        stop = stop + 1
     fig, ax = plt.subplots(figsize=(7, 3), dpi=200)
     # --- Remove spines and add gridlines
     ax.spines["left"].set_visible(False)
@@ -180,7 +186,7 @@ def count_wrong_vocab_percentage(user_choose):
     for i, j in zip(num_list, x):
         plt.text(i + 0.05, j, '%.0f' % i, ha='center', va='bottom', fontsize=6)
 
-    plt.barh(sorted_vocab, num_list, color=colors)
+    plt.barh(show_sorted_vocab, num_list, color=colors)
     plt.title(user_choose, fontsize=8)
     plt.show()
 
