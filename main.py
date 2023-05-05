@@ -11,6 +11,29 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 USER_ID = 1
+DETECT_WRONG_COUNTER = 0
+
+
+def detect(voca_list, cur_vocab, position):
+    global DETECT_WRONG_COUNTER
+    # user input the vocabulary was not match to the current position of voca_list
+    # loop the voca_list to check if vocabulary was correct in other position
+
+    # user did not answer
+    if cur_vocab == "":
+        return
+
+    if voca_list[position-1] == cur_vocab:
+        DETECT_WRONG_COUNTER = 0
+        return
+
+    for v in voca_list:
+        if cur_vocab == v:
+            DETECT_WRONG_COUNTER = DETECT_WRONG_COUNTER + 1
+
+    # 对不上 有可能是答错了、没答 这两者情况不考虑检测
+    # 只考虑一种情况，答错了，且这个错误的答案是 前N个或者后N个的答案
+    # 且这种情况连续了N次，
 
 
 def main():
@@ -65,6 +88,9 @@ def main():
         cor = "✅" if v == word_lower else "❌"
         row = [i, word_lower, v, cor]
         table.add_row(row)
+        detect(vocab[c][t], v, i)
+        if DETECT_WRONG_COUNTER > 5:
+            print("warming: you may miss some words, please restart this program again")
         i = i + 1
 
     print(table.draw())
